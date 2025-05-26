@@ -19,7 +19,37 @@ const MOVIES = [
     name: "wall e",
     poster: "/posters/wall-E.png",
     alt: "Wall E"
-  }
+  },
+  {
+    id: 4,
+    name: "Benjamin Button",
+    poster: "/posters/benjamin-button.png",
+    alt: "Benjamin Button"
+  },
+  {
+    id: 5,
+    name: "Narnia",
+    poster: "/posters/narnia.png",
+    alt: "The Chronicles of Narnia"
+  },
+  {
+    id: 6,
+    name: "Harry Potter",
+    poster: "/posters/harry-potter.png",
+    alt: "Harry Potter and the Philosopher's Stone"
+  },
+  {
+    id: 7,
+    name: "John Carter",
+    poster: "/posters/john-carter.png",
+    alt: "John Carter"
+  },
+  {
+    id: 8,
+    name: "Little Prince",
+    poster: "/posters/little-prince.png",
+    alt: "Little Prince"
+  },
 ];
 
 interface Movie {
@@ -246,8 +276,8 @@ const MoviePosterGame: React.FC = () => {
           <div className="space-y-4 text-lg">
             <p>🕵️ Your mission: Guess the hidden movie poster!</p>
             <p>⚡ Chase and click the bouncing orb to reveal parts of the poster</p>
-            <p>🎯 You get exactly 3 reveals - make them count!</p>
-            <p>🏃 After 3 touches, the orb becomes elusive...</p>
+            <p>🎯 You get exactly 6 reveals - make them count!</p>
+            <p>🏃 After 6 touches, the orb becomes elusive...</p>
             <p>🎭 Use your reveals wisely to identify the movie!</p>
           </div>
           <button
