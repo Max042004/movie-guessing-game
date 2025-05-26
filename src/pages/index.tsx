@@ -217,7 +217,7 @@ const MoviePosterGame: React.FC = () => {
     setRevealedAreas(prev => [...prev, newRevealedArea]);
     setTouchCount(prev => prev + 1);
     
-    if (touchCount + 1 >= 6) {
+    if (touchCount + 1 >= 10) {
       setGamePhase('dodging');
       setTimeout(() => {
         setGamePhase('guessing');
@@ -277,8 +277,8 @@ const MoviePosterGame: React.FC = () => {
           <div className="space-y-4 text-lg">
             <p>🕵️ Your mission: Guess the hidden movie poster!</p>
             <p>⚡ Chase and click the bouncing orb to reveal parts of the poster</p>
-            <p>🎯 You get exactly 6 reveals - make them count!</p>
-            <p>🏃 After 6 touches, the orb becomes elusive...</p>
+            <p>🎯 You get exactly 10 reveals - make them count!</p>
+            <p>🏃 After 10 touches, the orb becomes elusive...</p>
             <p>🎭 Use your reveals wisely to identify the movie!</p>
           </div>
           <button
@@ -301,7 +301,7 @@ const MoviePosterGame: React.FC = () => {
       {/* Score and Status */}
       <div className="absolute top-4 left-4 z-20 bg-black/70 rounded-lg px-4 py-2 text-white">
         <div>Score: {score}</div>
-        <div>Reveals: {touchCount}/6</div>
+        <div>Reveals: {touchCount}/10</div>
         <div className="text-sm">
           {gamePhase === 'playing' && 'Catch the bouncing orb!'}
           {gamePhase === 'dodging' && 'Orb is avoiding you...'}
