@@ -5,37 +5,52 @@ const MOVIES = [
   {
     id: 1,
     name: "Dune",
-    poster: "public/posters/dune-2.png", // You'll need to add this image
+    poster: "/posters/dune-2.png", // Fixed: removed "public/"
     alt: "Dune Part Two"
   },
   {
     id: 2,
     name: "the lord of the rings",
-    poster: "public/posters/the-lord-of-the-rings.png",
+    poster: "/posters/the-lord-of-the-rings.png",
     alt: "The Lord of the Rings"
   },
   {
     id: 3,
     name: "wall e",
-    poster: "public/posters/wall-E.png",
+    poster: "/posters/wall-E.png",
     alt: "Wall E"
   }
 ];
 
-const MoviePosterGame = () => {
-  const [currentMovie, setCurrentMovie] = useState(MOVIES[0]);
+interface Movie {
+  id: number;
+  name: string;
+  poster: string;
+  alt: string;
+}
+
+interface RevealedArea {
+  x: number;
+  y: number;
+  id: number;
+}
+
+type GamePhase = 'playing' | 'dodging' | 'guessing' | 'result';
+
+const MoviePosterGame: React.FC = () => {
+  const [currentMovie, setCurrentMovie] = useState<Movie>(MOVIES[0]);
   const [ballPosition, setBallPosition] = useState({ x: 50, y: 50 });
-  const [revealedAreas, setRevealedAreas] = useState([]);
+  const [revealedAreas, setRevealedAreas] = useState<RevealedArea[]>([]);
   const [touchCount, setTouchCount] = useState(0);
-  const [gamePhase, setGamePhase] = useState('playing'); // 'playing', 'dodging', 'guessing', 'result'
+  const [gamePhase, setGamePhase] = useState<GamePhase>('playing');
   const [userGuess, setUserGuess] = useState('');
   const [score, setScore] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
   
-  const ballRef = useRef(null);
-  const gameAreaRef = useRef(null);
-  const animationRef = useRef(null);
+  const ballRef = useRef<HTMLDivElement>(null);
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<NodeJS.Timeout | null>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
 
   // Initialize random movie
@@ -90,13 +105,17 @@ const MoviePosterGame = () => {
   useEffect(() => {
     if (gameStarted && (gamePhase === 'playing' || gamePhase === 'dodging')) {
       animationRef.current = setInterval(moveBall, 50);
-      return () => clearInterval(animationRef.current);
+      return () => {
+        if (animationRef.current) {
+          clearInterval(animationRef.current);
+        }
+      };
     }
   }, [moveBall, gameStarted, gamePhase]);
 
   // Track mouse position for dodging
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       if (gameAreaRef.current) {
         const rect = gameAreaRef.current.getBoundingClientRect();
         mousePositionRef.current = {
@@ -115,7 +134,7 @@ const MoviePosterGame = () => {
   const handleBallClick = () => {
     if (gamePhase !== 'playing') return;
     
-    const newRevealedArea = {
+    const newRevealedArea: RevealedArea = {
       x: ballPosition.x,
       y: ballPosition.y,
       id: Date.now()
@@ -132,8 +151,9 @@ const MoviePosterGame = () => {
     }
   };
 
-  const handleGuessSubmit = (e) => {
-    e.preventDefault();
+  const handleGuessSubmit = () => {
+    if (!userGuess.trim()) return;
+    
     const isCorrect = userGuess.toLowerCase().trim() === currentMovie.name.toLowerCase().trim();
     
     if (isCorrect) {
@@ -141,6 +161,12 @@ const MoviePosterGame = () => {
     }
     
     setGamePhase('result');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleGuessSubmit();
+    }
   };
 
   const startNewGame = () => {
@@ -255,24 +281,25 @@ const MoviePosterGame = () => {
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
               <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
-                What's the movie?
+                What&apos;s the movie?
               </h2>
-              <form onSubmit={handleGuessSubmit} className="space-y-4">
+              <div className="space-y-4">
                 <input
                   type="text"
                   value={userGuess}
                   onChange={(e) => setUserGuess(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   placeholder="Enter movie name..."
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-lg"
                   autoFocus
                 />
                 <button
-                  type="submit"
+                  onClick={handleGuessSubmit}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
                 >
                   Submit Guess
                 </button>
-              </form>
+              </div>
             </div>
           </div>
         )}
@@ -292,7 +319,7 @@ const MoviePosterGame = () => {
               </h2>
               <p className="text-xl mb-2 text-gray-800">The movie was:</p>
               <p className="text-2xl font-bold mb-6 text-blue-600">{currentMovie.name}</p>
-              <p className="mb-6 text-gray-600">Your guess: "{userGuess}"</p>
+              <p className="mb-6 text-gray-600">Your guess: &quot;{userGuess}&quot;</p>
               <button
                 onClick={startNewGame}
                 className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-200"
