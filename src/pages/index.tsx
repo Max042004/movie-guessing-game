@@ -5,19 +5,19 @@ const MOVIES = [
   {
     id: 1,
     name: "Dune",
-    poster: "/posters/dune-2.png", // You'll need to add this image
+    poster: "public/posters/dune-2.png", // You'll need to add this image
     alt: "Dune Part Two"
   },
   {
     id: 2,
     name: "the lord of the rings",
-    poster: "/posters/the-lord-of-the-rings.png",
+    poster: "public/posters/the-lord-of-the-rings.png",
     alt: "The Lord of the Rings"
   },
   {
     id: 3,
     name: "wall e",
-    poster: "/posters/wall-E.png",
+    poster: "public/posters/wall-E.png",
     alt: "Wall E"
   }
 ];
