@@ -5,7 +5,7 @@ const MOVIES = [
   {
     id: 1,
     name: "Dune",
-    poster: "/posters/dune-2.png", // Fixed: removed "public/"
+    poster: "/posters/dune-2.png",
     alt: "Dune Part Two"
   },
   {
@@ -40,6 +40,7 @@ type GamePhase = 'playing' | 'dodging' | 'guessing' | 'result';
 const MoviePosterGame: React.FC = () => {
   const [currentMovie, setCurrentMovie] = useState<Movie>(MOVIES[0]);
   const [ballPosition, setBallPosition] = useState({ x: 50, y: 50 });
+  const [ballVelocity, setBallVelocity] = useState({ x: 1.5, y: 1.2 });
   const [revealedAreas, setRevealedAreas] = useState<RevealedArea[]>([]);
   const [touchCount, setTouchCount] = useState(0);
   const [gamePhase, setGamePhase] = useState<GamePhase>('playing');
@@ -59,48 +60,90 @@ const MoviePosterGame: React.FC = () => {
     setCurrentMovie(randomMovie);
   }, []);
 
-  // Ball movement animation
+  // Normalize text for comparison - removes special characters, spaces, and converts to lowercase
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric characters
+      .trim();
+  };
+
+  // Ball movement animation with bouncing
   const moveBall = useCallback(() => {
-    if (gamePhase === 'dodging') {
-      // Dodging phase - ball actively avoids cursor
-      setBallPosition(prev => {
+    setBallPosition(prev => {
+      setBallVelocity(prevVel => {
+        let newX = prev.x;
+        let newY = prev.y;
+        let newVelX = prevVel.x;
+        let newVelY = prevVel.y;
+
+        if (gamePhase === 'dodging') {
+          // Dodging phase - ball actively avoids cursor
+          const mouseX = mousePositionRef.current.x;
+          const mouseY = mousePositionRef.current.y;
+          
+          // Calculate distance from mouse
+          const dx = prev.x - mouseX;
+          const dy = prev.y - mouseY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 150) {
+            // Run away from mouse
+            const angle = Math.atan2(dy, dx);
+            newVelX = Math.cos(angle) * 3;
+            newVelY = Math.sin(angle) * 3;
+          } else {
+            // Continue with bouncing movement
+            newX = prev.x + newVelX;
+            newY = prev.y + newVelY;
+          }
+        } else if (gamePhase === 'playing') {
+          // Normal phase - bouncing movement
+          newX = prev.x + newVelX;
+          newY = prev.y + newVelY;
+        }
+        
+        // Bounce off walls
+        if (newX <= 2 || newX >= 98) {
+          newVelX = -newVelX;
+          newX = newX <= 2 ? 2 : 98;
+        }
+        if (newY <= 2 || newY >= 98) {
+          newVelY = -newVelY;
+          newY = newY <= 2 ? 2 : 98;
+        }
+
+        // Keep ball within bounds
+        newX = Math.max(2, Math.min(98, newX));
+        newY = Math.max(2, Math.min(98, newY));
+        
+        return { x: newVelX, y: newVelY };
+      });
+
+      // Apply velocity changes for dodging mode
+      if (gamePhase === 'dodging') {
         const mouseX = mousePositionRef.current.x;
         const mouseY = mousePositionRef.current.y;
         
-        // Calculate distance from mouse
         const dx = prev.x - mouseX;
         const dy = prev.y - mouseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        let newX = prev.x;
-        let newY = prev.y;
-        
         if (distance < 150) {
-          // Run away from mouse
           const angle = Math.atan2(dy, dx);
-          newX = prev.x + Math.cos(angle) * 3;
-          newY = prev.y + Math.sin(angle) * 3;
-        } else {
-          // Random movement when far from mouse
-          newX = prev.x + (Math.random() - 0.5) * 4;
-          newY = prev.y + (Math.random() - 0.5) * 4;
+          const newX = Math.max(2, Math.min(98, prev.x + Math.cos(angle) * 3));
+          const newY = Math.max(2, Math.min(98, prev.y + Math.sin(angle) * 3));
+          return { x: newX, y: newY };
         }
-        
-        // Keep ball within bounds
-        newX = Math.max(5, Math.min(95, newX));
-        newY = Math.max(5, Math.min(95, newY));
-        
-        return { x: newX, y: newY };
-      });
-    } else if (gamePhase === 'playing') {
-      // Normal phase - random movement
-      setBallPosition(prev => {
-        const newX = Math.max(5, Math.min(95, prev.x + (Math.random() - 0.5) * 2));
-        const newY = Math.max(5, Math.min(95, prev.y + (Math.random() - 0.5) * 2));
-        return { x: newX, y: newY };
-      });
-    }
-  }, [gamePhase]);
+      }
+
+      // Normal bouncing movement
+      const newX = Math.max(2, Math.min(98, prev.x + ballVelocity.x));
+      const newY = Math.max(2, Math.min(98, prev.y + ballVelocity.y));
+      
+      return { x: newX, y: newY };
+    });
+  }, [gamePhase, ballVelocity.x, ballVelocity.y]);
 
   useEffect(() => {
     if (gameStarted && (gamePhase === 'playing' || gamePhase === 'dodging')) {
@@ -154,7 +197,9 @@ const MoviePosterGame: React.FC = () => {
   const handleGuessSubmit = () => {
     if (!userGuess.trim()) return;
     
-    const isCorrect = userGuess.toLowerCase().trim() === currentMovie.name.toLowerCase().trim();
+    const normalizedGuess = normalizeText(userGuess);
+    const normalizedAnswer = normalizeText(currentMovie.name);
+    const isCorrect = normalizedGuess === normalizedAnswer;
     
     if (isCorrect) {
       setScore(prev => prev + 1);
@@ -173,6 +218,10 @@ const MoviePosterGame: React.FC = () => {
     const randomMovie = MOVIES[Math.floor(Math.random() * MOVIES.length)];
     setCurrentMovie(randomMovie);
     setBallPosition({ x: 50, y: 50 });
+    setBallVelocity({ 
+      x: (Math.random() - 0.5) * 3, 
+      y: (Math.random() - 0.5) * 3 
+    });
     setRevealedAreas([]);
     setTouchCount(0);
     setGamePhase('playing');
@@ -196,7 +245,7 @@ const MoviePosterGame: React.FC = () => {
           </h1>
           <div className="space-y-4 text-lg">
             <p>🕵️ Your mission: Guess the hidden movie poster!</p>
-            <p>⚡ Chase and click the glowing orb to reveal parts of the poster</p>
+            <p>⚡ Chase and click the bouncing orb to reveal parts of the poster</p>
             <p>🎯 You get exactly 3 reveals - make them count!</p>
             <p>🏃 After 3 touches, the orb becomes elusive...</p>
             <p>🎭 Use your reveals wisely to identify the movie!</p>
@@ -212,6 +261,10 @@ const MoviePosterGame: React.FC = () => {
     );
   }
 
+  const normalizedGuess = normalizeText(userGuess);
+  const normalizedAnswer = normalizeText(currentMovie.name);
+  const isCorrect = normalizedGuess === normalizedAnswer;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-black relative overflow-hidden">
       {/* Score and Status */}
@@ -219,7 +272,7 @@ const MoviePosterGame: React.FC = () => {
         <div>Score: {score}</div>
         <div>Reveals: {touchCount}/3</div>
         <div className="text-sm">
-          {gamePhase === 'playing' && 'Catch the orb!'}
+          {gamePhase === 'playing' && 'Catch the bouncing orb!'}
           {gamePhase === 'dodging' && 'Orb is avoiding you...'}
           {gamePhase === 'guessing' && 'Time to guess!'}
         </div>
@@ -229,39 +282,46 @@ const MoviePosterGame: React.FC = () => {
       <div
         ref={gameAreaRef}
         className="w-full h-screen relative cursor-crosshair"
-        style={{
-          backgroundImage: `url(${currentMovie.poster})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
       >
-        {/* Black Overlay */}
-        <div className="absolute inset-0 bg-black z-10" />
+        {/* Movie Poster Background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${currentMovie.poster})`,
+          }}
+        />
         
-        {/* Revealed Areas */}
-        {revealedAreas.map((area) => (
-          <div
-            key={area.id}
-            className="absolute z-15 rounded-full"
-            style={{
-              left: `${area.x}%`,
-              top: `${area.y}%`,
-              width: '120px',
-              height: '120px',
-              transform: 'translate(-50%, -50%)',
-              boxShadow: `0 0 0 60px black`,
-              clipPath: 'circle(60px)',
-              background: 'transparent'
-            }}
-          />
-        ))}
+        {/* Black Overlay with SVG mask for holes */}
+        <div className="absolute inset-0">
+          <svg width="100%" height="100%" className="absolute inset-0">
+            <defs>
+              <mask id="reveal-mask">
+                <rect width="100%" height="100%" fill="white" />
+                {revealedAreas.map((area) => (
+                  <circle
+                    key={area.id}
+                    cx={`${area.x}%`}
+                    cy={`${area.y}%`}
+                    r="60"
+                    fill="black"
+                  />
+                ))}
+              </mask>
+            </defs>
+            <rect
+              width="100%"
+              height="100%"
+              fill="black"
+              mask="url(#reveal-mask)"
+            />
+          </svg>
+        </div>
 
         {/* Moving Ball */}
         {(gamePhase === 'playing' || gamePhase === 'dodging') && (
           <div
             ref={ballRef}
-            className={`absolute w-6 h-6 rounded-full z-20 cursor-pointer transition-all duration-100 ${
+            className={`absolute w-6 h-6 rounded-full z-20 cursor-pointer transition-colors duration-200 ${
               gamePhase === 'dodging' 
                 ? 'bg-red-500 shadow-lg shadow-red-500/50 animate-pulse' 
                 : 'bg-cyan-400 shadow-lg shadow-cyan-400/50'
@@ -309,13 +369,9 @@ const MoviePosterGame: React.FC = () => {
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/90">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center">
               <h2 className={`text-3xl font-bold mb-4 ${
-                userGuess.toLowerCase().trim() === currentMovie.name.toLowerCase().trim() 
-                  ? 'text-green-600' 
-                  : 'text-red-600'
+                isCorrect ? 'text-green-600' : 'text-red-600'
               }`}>
-                {userGuess.toLowerCase().trim() === currentMovie.name.toLowerCase().trim() 
-                  ? '🎉 Correct!' 
-                  : '❌ Wrong!'}
+                {isCorrect ? '🎉 Correct!' : '❌ Wrong!'}
               </h2>
               <p className="text-xl mb-2 text-gray-800">The movie was:</p>
               <p className="text-2xl font-bold mb-6 text-blue-600">{currentMovie.name}</p>
