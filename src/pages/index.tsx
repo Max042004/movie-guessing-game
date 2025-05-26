@@ -28,7 +28,7 @@ const MOVIES = [
   },
   {
     id: 5,
-    name: "Narnia",
+    name: "The Chronicles of Narnia",
     poster: "/posters/narnia.png",
     alt: "The Chronicles of Narnia"
   },
