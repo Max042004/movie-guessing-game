@@ -186,7 +186,7 @@ const MoviePosterGame: React.FC = () => {
     setRevealedAreas(prev => [...prev, newRevealedArea]);
     setTouchCount(prev => prev + 1);
     
-    if (touchCount + 1 >= 3) {
+    if (touchCount + 1 >= 6) {
       setGamePhase('dodging');
       setTimeout(() => {
         setGamePhase('guessing');
@@ -270,7 +270,7 @@ const MoviePosterGame: React.FC = () => {
       {/* Score and Status */}
       <div className="absolute top-4 left-4 z-20 bg-black/70 rounded-lg px-4 py-2 text-white">
         <div>Score: {score}</div>
-        <div>Reveals: {touchCount}/3</div>
+        <div>Reveals: {touchCount}/6</div>
         <div className="text-sm">
           {gamePhase === 'playing' && 'Catch the bouncing orb!'}
           {gamePhase === 'dodging' && 'Orb is avoiding you...'}
