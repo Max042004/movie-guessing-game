@@ -1,8 +1,8 @@
-/** next.config.ts */
+/** next.config.js */
 const repo = 'movie-guessing-game'
 const isProd = process.env.NODE_ENV === 'production'
 
-export default {
+module.exports = {
   output: 'export',
   distDir: 'out',
   trailingSlash: true,
@@ -10,5 +10,3 @@ export default {
   basePath: isProd ? `/${repo}` : '',
   assetPrefix: isProd ? `/${repo}/` : undefined,
 }
-
-
