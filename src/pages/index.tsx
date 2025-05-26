@@ -94,7 +94,8 @@ const MoviePosterGame: React.FC = () => {
   const normalizeText = (text: string): string => {
     return text
       .toLowerCase()
-      .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric characters
+      .replace(/[^a-z0-9\s]/g, '') // Keep spaces for word-based comparison
+      .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
       .trim();
   };
 
@@ -351,7 +352,7 @@ const MoviePosterGame: React.FC = () => {
         {(gamePhase === 'playing' || gamePhase === 'dodging') && (
           <div
             ref={ballRef}
-            className={`absolute w-6 h-6 rounded-full z-20 cursor-pointer transition-colors duration-200 ${
+            className={`absolute w-12 h-12 rounded-full z-20 cursor-pointer transition-colors duration-200 ${
               gamePhase === 'dodging' 
                 ? 'bg-red-500 shadow-lg shadow-red-500/50 animate-pulse' 
                 : 'bg-cyan-400 shadow-lg shadow-cyan-400/50'
